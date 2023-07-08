@@ -8,8 +8,11 @@ module Iris =
     open System.Net.Http
 
     // Temporary: replace with online location
-    let private directory =
-        Path.Combine(__SOURCE_DIRECTORY__, "../data/iris")
+    let private cacheDirectory =
+        let cacheLocation =
+            Environment.SpecialFolder.LocalApplicationData
+            |> Environment.GetFolderPath
+        Path.Combine(cacheLocation, "TypedDatasets", "iris")
         |> DirectoryInfo
 
     let private url = "https://raw.githubusercontent.com/mathias-brandewinder/TypedDatasets/main/data/iris/iris.data"
@@ -38,9 +41,23 @@ module Iris =
     type Example = Example<Observation,string>
 
     let read () : seq<Example> =
-        download ()
-        |> Async.RunSynchronously
-        |> splitIntoLines
+        let cache =
+            if not (Directory.Exists(cacheDirectory.FullName))
+            then
+                printfn $"Creating cache at {cacheDirectory.FullName}"
+                Directory.CreateDirectory(cacheDirectory.FullName)
+            else cacheDirectory
+
+        if not (File.Exists(Path.Combine(cache.FullName, "iris.data")))
+        then
+            printfn $"Dowloading dataset in {cache.FullName}"
+            download ()
+            |> Async.RunSynchronously
+            |> fun data ->
+                File.WriteAllText((Path.Combine(cache.FullName,"iris.data")), data)
+
+        Path.Combine(cache.FullName,"iris.data")
+        |> File.ReadAllLines
         |> Seq.filter (fun row -> not (String.IsNullOrWhiteSpace row))
         |> Seq.map (fun row ->
             let block = row.Split ','
