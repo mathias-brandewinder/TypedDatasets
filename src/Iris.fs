@@ -5,11 +5,27 @@ module Iris =
 
     open System
     open System.IO
+    open System.Net.Http
 
     // Temporary: replace with online location
     let private directory =
         Path.Combine(__SOURCE_DIRECTORY__, "../data/iris")
         |> DirectoryInfo
+
+    let private url = "https://raw.githubusercontent.com/mathias-brandewinder/TypedDatasets/main/data/iris/iris.data"
+
+    let download () =
+        async {
+            use client = new HttpClient()
+            let! content =
+                url
+                |> client.GetStringAsync
+                |> Async.AwaitTask
+            return content
+            }
+
+    let splitIntoLines (input: string): seq<string> =
+        input.Split([|"\r\n"; "\r"; "\n"|], StringSplitOptions.None)
 
     type Observation = {
         /// sepal length in cm
@@ -22,8 +38,9 @@ module Iris =
     type Example = Example<Observation,string>
 
     let read () : seq<Example> =
-        Path.Combine(directory.FullName, "iris.data")
-        |> File.ReadAllLines
+        download ()
+        |> Async.RunSynchronously
+        |> splitIntoLines
         |> Seq.filter (fun row -> not (String.IsNullOrWhiteSpace row))
         |> Seq.map (fun row ->
             let block = row.Split ','
