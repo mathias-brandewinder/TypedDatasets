@@ -3,4 +3,6 @@
 
 open Datasets
 
-Iris.read()
+let dataset = Iris.dataset
+dataset.Source
+dataset.Read()

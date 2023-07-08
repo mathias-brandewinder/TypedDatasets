@@ -37,3 +37,10 @@ module Iris =
                     }
             }
             )
+
+    let dataset = {
+        new Dataset<Example> with
+            member this.Read() = read ()
+            member this.Source = "https://archive.ics.uci.edu/dataset/53/iris"
+            member this.License = "https://creativecommons.org/licenses/by/4.0/"
+        }
