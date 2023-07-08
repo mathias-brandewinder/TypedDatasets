@@ -8,3 +8,5 @@ type Example<'Observation,'Label> = {
 type Dataset<'T> =
     abstract member Read: unit -> seq<'T>
     abstract member Source: string
+
+[<Measure>]type cm
