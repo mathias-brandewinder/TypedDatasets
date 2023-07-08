@@ -7,15 +7,19 @@ module Iris =
     open System.IO
     open System.Net.Http
 
-    // Temporary: replace with online location
+
+    let private folderName = "iris"
+    let private fileName = "iris.data"
+
     let private cacheDirectory =
         let cacheLocation =
             Environment.SpecialFolder.LocalApplicationData
             |> Environment.GetFolderPath
-        Path.Combine(cacheLocation, "TypedDatasets", "iris")
+        Path.Combine(cacheLocation, "TypedDatasets", folderName)
         |> DirectoryInfo
 
-    let private url = "https://raw.githubusercontent.com/mathias-brandewinder/TypedDatasets/main/data/iris/iris.data"
+    let private url =
+        $"https://raw.githubusercontent.com/mathias-brandewinder/TypedDatasets/main/data/{folderName}/{fileName}"
 
     let download () =
         async {
@@ -26,9 +30,6 @@ module Iris =
                 |> Async.AwaitTask
             return content
             }
-
-    let splitIntoLines (input: string): seq<string> =
-        input.Split([|"\r\n"; "\r"; "\n"|], StringSplitOptions.None)
 
     type Observation = {
         /// sepal length in cm
@@ -48,15 +49,15 @@ module Iris =
                 Directory.CreateDirectory(cacheDirectory.FullName)
             else cacheDirectory
 
-        if not (File.Exists(Path.Combine(cache.FullName, "iris.data")))
+        if not (File.Exists(Path.Combine(cache.FullName, fileName)))
         then
             printfn $"Dowloading dataset in {cache.FullName}"
             download ()
             |> Async.RunSynchronously
             |> fun data ->
-                File.WriteAllText((Path.Combine(cache.FullName,"iris.data")), data)
+                File.WriteAllText((Path.Combine(cache.FullName, fileName)), data)
 
-        Path.Combine(cache.FullName,"iris.data")
+        Path.Combine(cache.FullName, fileName)
         |> File.ReadAllLines
         |> Seq.filter (fun row -> not (String.IsNullOrWhiteSpace row))
         |> Seq.map (fun row ->
